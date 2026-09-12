@@ -1,0 +1,14 @@
+# Cache de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Entornos virtuales (opcional, pero muy recomendado)
+.venv/
+venv/
+env/
+
+# Reportes y salidas de Robot Framework
+output.xml
+report.html
+log.html

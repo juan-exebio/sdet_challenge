@@ -1,0 +1,76 @@
+name: Robot Framework Tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Run E2E Tests (${{ matrix.env }})
+    runs-on: ubuntu-latest
+    environment: ${{ matrix.env }}
+    strategy:
+      fail-fast: false  
+      matrix:
+        include:
+          - env: dev
+            api_path: dev
+            port: 8080
+          - env: prod
+            api_path: prod
+            port: 8081
+            
+    services:
+      api-server:
+        image: "ghcr.io/danielsilva-loanpro/sdet-interview-challenge:latest"
+        ports:
+          - ${{ matrix.port }}:3000 
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run tests against ${{ matrix.env }} API
+        run: |
+          robot --outputdir results/${{ matrix.env }} \
+          --variable BASE_URL:http://localhost:${{ matrix.port }}/${{ matrix.api_path }} \
+          ChallengeTestSuite/
+
+      - name: Publish Robot Report on GitHub Pages
+        if: always() 
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: results/${{ matrix.env }}/
+          destination_dir: ${{ matrix.env }}
+          keep_files: true    
+
+      - name: Generate Report Link in Actions Summary
+        if: always()
+        run: |
+          # Dynamically capture repository name and owner in lowercase
+          REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          REPO_NAME=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          ENV_NAME="${{ matrix.env }}"
+          
+          # Build the exact direct URL to your report.html
+          REPORT_URL="https://${REPO_OWNER}.github.io/${REPO_NAME}/${ENV_NAME}/report.html"
+          
+          # Write the Markdown block directly to the GitHub Step Summary
+          echo "### 📊 Robot Framework Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "The test report for the **${ENV_NAME}** environment has been successfully generated." >> $GITHUB_STEP_SUMMARY
+          echo "👉 **[Click here to view the Robot Report](${REPORT_URL})**" >> $GITHUB_STEP_SUMMARY
