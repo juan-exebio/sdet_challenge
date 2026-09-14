@@ -1,5 +1,15 @@
 # How to run Robot tests
 
+## Deploy api endpoints
+
+1. Install Docker on your local machine
+
+2. On a terminal execute **docker pull ghcr.io/danielsilva-loanpro/sdet-interview-challenge:latest**
+
+3. On a terminal execute **docker run -p 3000:3000 ghcr.io/danielsilva-loanpro/sdet-interview-challenge:latest**
+
+4. Verify the application is running executing on a terminal **curl http://localhost:3000/dev/users**
+
 ## Creation of virtual environment
 
 Before creating the virtual environment, you will need to install **python** on your local
